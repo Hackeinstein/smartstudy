@@ -144,6 +144,7 @@
 
 **Important rules:**
 - Output ONLY the JSON array. No introductory text, no markdown formatting, no code fences — just the raw JSON.
+- Generate at least 30 questions from the provided material. If fewer are visible, create additional related questions on the same topics.
 - For true/false questions, use options: ["A) True", "B) False"].
 - For fill-in-the-blank or short-answer questions, provide 4 plausible options and mark the correct one.
 - Ensure every question has exactly the fields: "question", "options", "correctAnswer", "explanation".
@@ -212,6 +213,11 @@ Now analyze the following past questions and return the JSON:</pre>
     <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-400 dark:text-gray-500">
       <span>© 2026 PastQ. Built for Nigerian students.</span>
       <span>No data collected · 100% client-side</span>
+    </div>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 mt-4 text-center">
+      <p class="text-xs text-gray-400 dark:text-gray-500">
+        Created by <a href="https://github.com/hackeinstein" target="_blank" rel="noopener noreferrer" class="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium transition-colors">@hackeinstein</a>
+      </p>
     </div>
   </footer>
 
