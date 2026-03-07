@@ -240,9 +240,18 @@ body.font-xl {
   transition: all 0.2s ease;
 }
 
-.bookmark-btn.bookmarked {
-  color: #f59e0b !important;
+.bookmark-btn svg {
+  transition: all 0.2s ease;
+}
+
+.bookmark-btn.bookmarked svg {
   fill: #f59e0b;
+  stroke: #f59e0b;
+  color: #f59e0b;
+}
+
+.bookmark-btn:active {
+  transform: scale(0.95);
 }
 
 /* Print styles */

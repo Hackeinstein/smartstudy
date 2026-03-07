@@ -357,8 +357,8 @@ $(function () {
               <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-bold">${idx + 1}</span>
               <p class="text-sm sm:text-base font-medium text-gray-900 dark:text-white leading-relaxed">${escapeHtml(q.question.replace(/^\d+[\.\)]\s*/, ''))}</p>
             </div>
-            <button class="bookmark-btn shrink-0 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" aria-label="Bookmark question">
-              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            <button class="bookmark-btn shrink-0 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" data-question-index="${idx}" aria-label="Bookmark question">
+              <svg class="bookmark-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
             </button>
           </div>
           <div class="grid gap-2 sm:gap-2.5 ml-10">
@@ -370,6 +370,11 @@ $(function () {
 
     updateProgress();
     updateFilterCounts();
+    
+    // Restore bookmarked states
+    bookmarkedQuestions.forEach(function(qIdx) {
+      updateBookmarkButton(qIdx);
+    });
   }
 
   // ========== OPTION SELECTION ==========
@@ -980,7 +985,7 @@ $(function () {
   $(document).on('click', '.bookmark-btn', function (e) {
     e.preventDefault();
     e.stopPropagation();
-    const qIdx = parseInt($(this).closest('.question-card').data('question-index'), 10);
+    const qIdx = parseInt($(this).attr('data-question-index'), 10);
     toggleBookmark(qIdx);
   });
 
