@@ -68,6 +68,8 @@ $(function () {
 
   let quizData = [];
   let userAnswers = {};
+  let bookmarkedQuestions = new Set();
+  let currentFilter = 'all';
   let timerInterval = null;
   let timerSeconds = 0;
   let startTime = null;
@@ -350,9 +352,14 @@ $(function () {
 
       const card = `
         <div class="question-card p-5 sm:p-6 rounded-2xl bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 shadow-sm" data-question-index="${idx}">
-          <div class="flex items-start gap-3 mb-4">
-            <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-bold">${idx + 1}</span>
-            <p class="text-sm sm:text-base font-medium text-gray-900 dark:text-white leading-relaxed">${escapeHtml(q.question.replace(/^\d+[\.\)]\s*/, ''))}</p>
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div class="flex items-start gap-3 flex-1">
+              <span class="shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-bold">${idx + 1}</span>
+              <p class="text-sm sm:text-base font-medium text-gray-900 dark:text-white leading-relaxed">${escapeHtml(q.question.replace(/^\d+[\.\)]\s*/, ''))}</p>
+            </div>
+            <button class="bookmark-btn shrink-0 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" aria-label="Bookmark question">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            </button>
           </div>
           <div class="grid gap-2 sm:gap-2.5 ml-10">
             ${optionsHtml}
@@ -362,6 +369,7 @@ $(function () {
     });
 
     updateProgress();
+    updateFilterCounts();
   }
 
   // ========== OPTION SELECTION ==========
@@ -391,6 +399,8 @@ $(function () {
     $('#progressLabel').text('Answered ' + answered + ' of ' + total);
     $('#progressPercent').text(pct + '%');
     $('#progressBar').css('width', pct + '%');
+    
+    updateFilterCounts();
   }
 
   // ========== TIMER ==========
@@ -444,11 +454,14 @@ $(function () {
     const total = quizData.length;
     let correct = 0;
     const results = [];
+    wrongQuestions = [];
 
     quizData.forEach(function (q, idx) {
       const chosen = userAnswers[idx] || null;
       const isCorrect = chosen === q.correctAnswer;
       if (isCorrect) correct++;
+      else wrongQuestions.push(q); // Store wrong questions
+      
       results.push({
         index: idx,
         question: q.question,
@@ -630,8 +643,12 @@ $(function () {
   });
 
   // ========== RETRY / NEW ==========
+  let wrongQuestions = [];
+
   $('#retryQuiz').on('click', function () {
     userAnswers = {};
+    bookmarkedQuestions.clear();
+    currentFilter = 'all';
     startTime = Date.now();
     buildQuiz(quizData);
 
@@ -644,11 +661,44 @@ $(function () {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
+  $('#reviewWrong').on('click', function () {
+    if (wrongQuestions.length === 0) {
+      showToast('No wrong answers to review!');
+      return;
+    }
+
+    userAnswers = {};
+    bookmarkedQuestions.clear();
+    currentFilter = 'all';
+    startTime = Date.now();
+    
+    // Filter quiz data to only wrong questions
+    quizData = wrongQuestions.slice();
+    
+    buildQuiz(quizData);
+
+    $('#resultsSection').addClass('hidden');
+    $('#quizSection').removeClass('hidden');
+
+    showToast(`Reviewing ${wrongQuestions.length} wrong answer${wrongQuestions.length !== 1 ? 's' : ''}`);
+
+    if ($('#timerToggle').is(':checked')) {
+      startTimer(parseInt($('#timerMinutes').val(), 10) || 30);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   $('#newQuiz, #backToInput').on('click', function () {
     stopTimer();
     quizData = [];
     userAnswers = {};
+    bookmarkedQuestions.clear();
+    currentFilter = 'all';
     startTime = null;
+    
+    // Clear progress
+    try { localStorage.removeItem('pastq-progress'); } catch (e) { /* */ }
+    
     $('#quizSection').addClass('hidden');
     $('#resultsSection').addClass('hidden');
     $('#inputSection').removeClass('hidden');
@@ -781,6 +831,265 @@ $(function () {
       }
     }
   }
+
+  // ========== FONT SIZE CONTROLS ==========
+  let currentFontSize = 'font-md';
+  const fontSizes = ['font-sm', 'font-md', 'font-lg', 'font-xl'];
+  
+  (function initFontSize() {
+    try {
+      const saved = localStorage.getItem('pastq-fontsize');
+      if (saved && fontSizes.includes(saved)) {
+        currentFontSize = saved;
+        $('body').removeClass(fontSizes.join(' ')).addClass(currentFontSize);
+      }
+    } catch (e) { /* no storage */ }
+  })();
+
+  $('#fontSizeToggle').on('click', function () {
+    const currentIndex = fontSizes.indexOf(currentFontSize);
+    const nextIndex = (currentIndex + 1) % fontSizes.length;
+    currentFontSize = fontSizes[nextIndex];
+    $('body').removeClass(fontSizes.join(' ')).addClass(currentFontSize);
+    try { localStorage.setItem('pastq-fontsize', currentFontSize); } catch (e) { /* quota */ }
+    
+    const sizeNames = { 'font-sm': 'Small', 'font-md': 'Medium', 'font-lg': 'Large', 'font-xl': 'Extra Large' };
+    showToast('Font size: ' + sizeNames[currentFontSize], 1500);
+  });
+
+  // ========== STUDY STREAKS ==========
+  function updateStreak() {
+    try {
+      const today = new Date().toDateString();
+      let streakData = JSON.parse(localStorage.getItem('pastq-streak') || '{"count":0,"lastDate":""}');
+      
+      if (streakData.lastDate === today) {
+        // Already counted today
+      } else {
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        if (streakData.lastDate === yesterday) {
+          // Continue streak
+          streakData.count++;
+        } else if (streakData.lastDate === '') {
+          // First time
+          streakData.count = 1;
+        } else {
+          // Streak broken
+          streakData.count = 1;
+        }
+        streakData.lastDate = today;
+        localStorage.setItem('pastq-streak', JSON.stringify(streakData));
+      }
+      
+      if (streakData.count > 0) {
+        $('#streakCount').text(streakData.count);
+        $('#streakBadge').removeClass('hidden').addClass('flex');
+      }
+    } catch (e) { /* quota */ }
+  }
+
+  updateStreak();
+
+  // ========== IMPORT/EXPORT ==========
+  $('#importQuiz').on('click', function () {
+    $('#importFileInput').click();
+  });
+
+  $('#importFileInput').on('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      try {
+        const content = event.target.result;
+        const data = JSON.parse(content);
+        $('#jsonInput').val(JSON.stringify(data, null, 2)).trigger('input');
+        showToast('Quiz imported successfully!');
+      } catch (err) {
+        showToast('Error: Invalid quiz file');
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    e.target.value = '';
+  });
+
+  $('#exportQuiz').on('click', function () {
+    const raw = $('#jsonInput').val().trim();
+    if (!raw) {
+      showToast('No quiz data to export');
+      return;
+    }
+
+    try {
+      // Validate JSON
+      JSON.parse(raw);
+      
+      // Create and download file
+      const blob = new Blob([raw], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'pastq-quiz-' + Date.now() + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showToast('Quiz exported successfully!');
+    } catch (e) {
+      showToast('Error: Invalid JSON');
+    }
+  });
+
+  // ========== SEARCH QUIZZES ==========
+  $('#toggleSaved').on('click', function () {
+    const $list = $('#savedList');
+    const $search = $('#searchQuizzes');
+    $list.toggleClass('hidden');
+    $search.toggleClass('hidden');
+  });
+
+  $('#searchQuizzes').on('input', function () {
+    const query = $(this).val().toLowerCase();
+    $('.saved-quiz-card').each(function () {
+      const text = $(this).text().toLowerCase();
+      $(this).toggle(text.includes(query));
+    });
+  });
+
+  // ========== QUESTION BOOKMARKING ==========
+  function toggleBookmark(qIdx) {
+    if (bookmarkedQuestions.has(qIdx)) {
+      bookmarkedQuestions.delete(qIdx);
+    } else {
+      bookmarkedQuestions.add(qIdx);
+    }
+    updateBookmarkButton(qIdx);
+    updateFilterCounts();
+    saveProgress();
+  }
+
+  function updateBookmarkButton(qIdx) {
+    const $btn = $(`.question-card[data-question-index="${qIdx}"] .bookmark-btn`);
+    $btn.toggleClass('bookmarked', bookmarkedQuestions.has(qIdx));
+  }
+
+  $(document).on('click', '.bookmark-btn', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const qIdx = parseInt($(this).closest('.question-card').data('question-index'), 10);
+    toggleBookmark(qIdx);
+  });
+
+  // ========== QUESTION FILTERS ==========
+  $('#showAllQuestions').on('click', function () {
+    currentFilter = 'all';
+    $('.filter-btn').removeClass('active');
+    $(this).addClass('active');
+    applyFilter();
+  });
+
+  $('#showBookmarked').on('click', function () {
+    currentFilter = 'bookmarked';
+    $('.filter-btn').removeClass('active');
+    $(this).addClass('active');
+    applyFilter();
+  });
+
+  $('#showUnanswered').on('click', function () {
+    currentFilter = 'unanswered';
+    $('.filter-btn').removeClass('active');
+    $(this).addClass('active');
+    applyFilter();
+  });
+
+  function applyFilter() {
+    $('.question-card').each(function () {
+      const qIdx = parseInt($(this).data('question-index'), 10);
+      let show = true;
+
+      if (currentFilter === 'bookmarked') {
+        show = bookmarkedQuestions.has(qIdx);
+      } else if (currentFilter === 'unanswered') {
+        show = !userAnswers.hasOwnProperty(qIdx);
+      }
+
+      $(this).toggle(show);
+    });
+
+    // Scroll to first visible question
+    const $first = $('.question-card:visible').first();
+    if ($first.length) {
+      $first[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function updateFilterCounts() {
+    const total = quizData.length;
+    const bookmarked = bookmarkedQuestions.size;
+    const answered = Object.keys(userAnswers).length;
+    const unanswered = total - answered;
+
+    $('#countAll').text(total);
+    $('#countBookmarked').text(bookmarked);
+    $('#countUnanswered').text(unanswered);
+  }
+
+  // ========== PROGRESS PERSISTENCE ==========
+  function saveProgress() {
+    if (quizData.length === 0) return;
+    try {
+      const progressData = {
+        quizData: quizData,
+        userAnswers: userAnswers,
+        bookmarked: Array.from(bookmarkedQuestions),
+        timestamp: Date.now()
+      };
+      localStorage.setItem('pastq-progress', JSON.stringify(progressData));
+    } catch (e) { /* quota */ }
+  }
+
+  function loadProgress() {
+    try {
+      const saved = localStorage.getItem('pastq-progress');
+      if (!saved) return false;
+
+      const progressData = JSON.parse(saved);
+      
+      // Check if progress is less than 24 hours old
+      const ageHours = (Date.now() - progressData.timestamp) / (1000 * 60 * 60);
+      if (ageHours > 24) {
+        localStorage.removeItem('pastq-progress');
+        return false;
+      }
+
+      // Restore data
+      quizData = progressData.quizData;
+      userAnswers = progressData.userAnswers || {};
+      bookmarkedQuestions = new Set(progressData.bookmarked || []);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Try to restore progress on page load
+  if (loadProgress()) {
+    buildQuiz(quizData);
+    $('#inputSection').addClass('hidden');
+    $('#quizSection').removeClass('hidden');
+    $('#resultsSection').addClass('hidden');
+    showToast('Previous quiz restored', 2000);
+  }
+
+  // Auto-save progress when answering questions
+  $(document).on('change', '#questionsContainer input[type="radio"]', function () {
+    saveProgress();
+  });
 
   // ========== UTILITY ==========
   function escapeHtml(str) {

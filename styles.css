@@ -204,6 +204,47 @@
   animation: confetti-fall linear forwards;
 }
 
+/* Filter buttons */
+.filter-btn.active {
+  background-color: #1470f5 !important;
+  color: white !important;
+}
+
+:is(.dark) .filter-btn.active {
+  background-color: #1470f5 !important;
+}
+
+.filter-btn.active span {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Font size variants */
+body.font-sm {
+  font-size: 14px;
+}
+
+body.font-md {
+  font-size: 16px;
+}
+
+body.font-lg {
+  font-size: 18px;
+}
+
+body.font-xl {
+  font-size: 20px;
+}
+
+/* Bookmark icon */
+.bookmark-btn {
+  transition: all 0.2s ease;
+}
+
+.bookmark-btn.bookmarked {
+  color: #f59e0b !important;
+  fill: #f59e0b;
+}
+
 /* Print styles */
 @media print {
   nav, footer, button, #timerDisplay, .no-print {
