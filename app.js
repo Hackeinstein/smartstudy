@@ -695,14 +695,12 @@ $(function () {
 
   $('#newQuiz, #backToInput').on('click', function () {
     stopTimer();
+    clearProgress();
     quizData = [];
     userAnswers = {};
     bookmarkedQuestions.clear();
     currentFilter = 'all';
     startTime = null;
-    
-    // Clear progress
-    try { localStorage.removeItem('pastq-progress'); } catch (e) { /* */ }
     
     $('#quizSection').addClass('hidden');
     $('#resultsSection').addClass('hidden');
@@ -1082,14 +1080,56 @@ $(function () {
     }
   }
 
-  // Try to restore progress on page load
-  if (loadProgress()) {
+  function clearProgress() {
+    try {
+      localStorage.removeItem('pastq-progress');
+    } catch (e) { /* no storage */ }
+  }
+
+  function resumeSavedQuiz() {
     buildQuiz(quizData);
     $('#inputSection').addClass('hidden');
     $('#quizSection').removeClass('hidden');
     $('#resultsSection').addClass('hidden');
-    showToast('Previous quiz restored', 2000);
+    showToast('Quiz resumed', 2000);
   }
+
+  // Check for saved progress on page load
+  if (loadProgress()) {
+    // Show the resume modal instead of auto-loading
+    $('#resumeModal').removeClass('hidden').addClass('flex');
+  }
+
+  // Continue Quiz button
+  $('#continueQuizBtn').on('click', function () {
+    $('#resumeModal').removeClass('flex').addClass('hidden');
+    resumeSavedQuiz();
+  });
+
+  // Start Fresh button
+  $('#startFreshBtn').on('click', function () {
+    $('#resumeModal').removeClass('flex').addClass('hidden');
+    clearProgress();
+    quizData = [];
+    userAnswers = {};
+    bookmarkedQuestions = new Set();
+    showToast('Starting fresh', 2000);
+  });
+
+  // Exit Quiz button
+  $('#exitQuiz').on('click', function () {
+    if (confirm('Are you sure you want to exit this quiz? Your progress will be lost.')) {
+      clearProgress();
+      quizData = [];
+      userAnswers = {};
+      bookmarkedQuestions = new Set();
+      $('#quizSection').addClass('hidden');
+      $('#resultsSection').addClass('hidden');
+      $('#inputSection').removeClass('hidden');
+      $('#jsonInput').val('');
+      showToast('Quiz exited', 2000);
+    }
+  });
 
   // Auto-save progress when answering questions
   $(document).on('change', '#questionsContainer input[type="radio"]', function () {

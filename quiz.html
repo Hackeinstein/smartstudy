@@ -175,6 +175,7 @@
             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span id="timerText">30:00</span>
           </div>
+          <button id="exitQuiz" class="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors">Exit Quiz</button>
           <button id="backToInput" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">← New Quiz</button>
         </div>
       </div>
@@ -268,6 +269,34 @@
     </section>
 
   </main>
+
+  <!-- Resume Quiz Modal -->
+  <div id="resumeModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-scale-in">
+      <div class="p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center">
+            <svg class="w-6 h-6 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Continue Previous Quiz?</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">You have a quiz in progress</p>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+          We found a quiz you were working on. Would you like to continue where you left off or start fresh?
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button id="startFreshBtn" class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+            Start Fresh
+          </button>
+          <button id="continueQuizBtn" class="flex-1 px-4 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold transition-all">
+            Continue Quiz
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden">
