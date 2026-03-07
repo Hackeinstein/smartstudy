@@ -286,6 +286,11 @@ $(function () {
       return Object.assign({}, q, { correctAnswer: ans });
     });
 
+    // Shuffle questions if enabled
+    if ($('#shuffleToggle').is(':checked')) {
+      parsed = shuffleArray(parsed);
+    }
+
     quizData = parsed;
     userAnswers = {};
 
@@ -371,6 +376,11 @@ $(function () {
 
     userAnswers[qIdx] = letter;
     updateProgress();
+
+    // Practice mode: Show answer immediately
+    if ($('#practiceModeToggle').is(':checked')) {
+      showPracticeModeFeedback(qIdx, letter);
+    }
   });
 
   function updateProgress() {
@@ -681,6 +691,94 @@ $(function () {
       });
       $('body').append($piece);
       setTimeout(function () { $piece.remove(); }, 5000);
+    }
+  }
+
+  // ========== SHUFFLE ARRAY ==========
+  function shuffleArray(array) {
+    const shuffled = array.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  // ========== PRACTICE MODE ==========
+  function showPracticeModeFeedback(qIdx, chosenLetter) {
+    const question = quizData[qIdx];
+    if (!question) return;
+
+    const $card = $(`.question-card[data-question-index="${qIdx}"]`);
+    const $options = $card.find('.option-label');
+    const isCorrect = chosenLetter === question.correctAnswer;
+
+    // Mark correct and wrong options
+    $options.each(function () {
+      const $opt = $(this);
+      const letter = $opt.data('letter');
+      
+      if (letter === question.correctAnswer) {
+        $opt.addClass('correct');
+      } else if (letter === chosenLetter && !isCorrect) {
+        $opt.addClass('wrong');
+      }
+      
+      // Disable all options
+      $opt.find('input').prop('disabled', true);
+    });
+
+    // Show explanation if available
+    if (question.explanation) {
+      const explanationHtml = `
+        <div class="mt-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30 animate-slide-down">
+          <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">
+            ${isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+          </p>
+          <p class="text-sm text-amber-800 dark:text-amber-300/90">${escapeHtml(question.explanation)}</p>
+        </div>`;
+      $card.find('.grid').after(explanationHtml);
+    }
+
+    // Haptic feedback on mobile
+    if (navigator.vibrate) {
+      navigator.vibrate(isCorrect ? [100] : [100, 50, 100]);
+    }
+
+    // Visual feedback
+    if (isCorrect) {
+      showToast('✓ Correct!', 1500);
+    }
+  }
+
+  // ========== TOUCH GESTURES ==========
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchEndX = 0;
+  let touchEndY = 0;
+
+  $(document).on('touchstart', '#questionsContainer', function (e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  });
+
+  $(document).on('touchend', '#questionsContainer', function (e) {
+    touchEndX = e.changedTouches[0].clientX;
+    touchEndY = e.changedTouches[0].clientY;
+    handleSwipe();
+  });
+
+  function handleSwipe() {
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    const minSwipeDistance = 50;
+
+    // Horizontal swipe (ignore vertical scrolling)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX > 0) {
+        // Swipe right - scroll to top (refresh)
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   }
 
