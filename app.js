@@ -174,14 +174,19 @@ $(function () {
     saved.forEach(function (item, i) {
       const date = new Date(item.date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
       const $card = $(`
-        <div class="saved-quiz-card flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40">
-          <div class="min-w-0">
-            <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">${escapeHtml(item.name)}</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500">${item.count} questions · ${date}</p>
+        <div class="saved-quiz-card group flex items-center justify-between p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/40 hover:border-brand-400 dark:hover:border-brand-500 cursor-pointer transition-all" data-index="${i}">
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <div class="shrink-0 w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center">
+              <span class="text-sm font-bold text-brand-600 dark:text-brand-400">${item.count}</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">${escapeHtml(item.name)}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">${item.count} Qs · ${date}</p>
+            </div>
           </div>
           <div class="flex items-center gap-2 shrink-0 ml-3">
-            <button class="load-saved text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline" data-index="${i}">Load</button>
-            <button class="delete-saved text-xs text-gray-400 hover:text-red-500 transition-colors" data-index="${i}" aria-label="Delete saved quiz">
+            <span class="text-xs font-medium text-brand-600 dark:text-brand-400 opacity-0 group-hover:opacity-100 transition-opacity">Start →</span>
+            <button class="delete-saved p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all" data-index="${i}" aria-label="Delete quiz">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
           </div>
@@ -191,17 +196,32 @@ $(function () {
     });
   }
 
-  $(document).on('click', '.load-saved', function () {
+  // Click a saved quiz card to start it directly
+  $(document).on('click', '.saved-quiz-card', function (e) {
+    if ($(e.target).closest('.delete-saved').length) return;
     let saved = [];
     try { saved = JSON.parse(localStorage.getItem('pastq-saved') || '[]'); } catch (e) { return; }
     const idx = parseInt($(this).data('index'), 10);
     if (saved[idx]) {
-      $input.val(JSON.stringify(saved[idx].data, null, 2)).trigger('input');
-      showToast('Quiz loaded');
+      quizData = saved[idx].data;
+      userAnswers = {};
+      bookmarkedQuestions = new Set();
+      currentFilter = 'all';
+      buildQuiz(quizData);
+      $('#inputSection').addClass('hidden');
+      $('#quizSection').removeClass('hidden');
+      $('#resultsSection').addClass('hidden');
+      if ($('#timerToggle').is(':checked')) {
+        startTimer(parseInt($('#timerMinutes').val(), 10) || 30);
+      }
+      startTime = Date.now();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast('Started: ' + saved[idx].name, 2500);
     }
   });
 
-  $(document).on('click', '.delete-saved', function () {
+  $(document).on('click', '.delete-saved', function (e) {
+    e.stopPropagation();
     let saved = [];
     try { saved = JSON.parse(localStorage.getItem('pastq-saved') || '[]'); } catch (e) { return; }
     const idx = parseInt($(this).data('index'), 10);
@@ -211,8 +231,13 @@ $(function () {
     showToast('Quiz deleted');
   });
 
-  $('#toggleSaved').on('click', function () {
-    $('#savedList').toggleClass('hidden');
+  // Search quizzes
+  $('#searchQuizzes').on('input', function () {
+    const query = $(this).val().toLowerCase();
+    $('.saved-quiz-card').each(function () {
+      const text = $(this).text().toLowerCase();
+      $(this).toggle(text.includes(query));
+    });
   });
 
   loadSavedQuizzes();
@@ -296,8 +321,10 @@ $(function () {
     quizData = parsed;
     userAnswers = {};
 
-    // Save to localStorage
-    saveQuiz(parsed);
+    // Save to localStorage with custom name
+    var quizName = $('#quizNameInput').val().trim();
+    saveQuiz(parsed, quizName);
+    $('#quizNameInput').val('');
 
     // Build quiz UI
     buildQuiz(parsed);
@@ -316,17 +343,18 @@ $(function () {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function saveQuiz(data) {
+  function saveQuiz(data, customName) {
     try {
       let saved = JSON.parse(localStorage.getItem('pastq-saved') || '[]');
       // Detect duplicate by first question
       const firstQ = data[0].question;
       const exists = saved.some(function (s) { return s.data[0] && s.data[0].question === firstQ; });
       if (!exists) {
-        const name = firstQ.replace(/^\d+[\.\)]\s*/, '').substring(0, 50) + (firstQ.length > 50 ? '...' : '');
+        var name = customName || firstQ.replace(/^\d+[\.\)]\s*/, '').substring(0, 50) + (firstQ.length > 50 ? '...' : '');
         saved.unshift({ name: name, count: data.length, date: new Date().toISOString(), data: data });
-        if (saved.length > 20) saved = saved.slice(0, 20); // Cap at 20
+        if (saved.length > 20) saved = saved.slice(0, 20);
         localStorage.setItem('pastq-saved', JSON.stringify(saved));
+        loadSavedQuizzes();
       }
     } catch (e) { /* quota or access error */ }
   }
@@ -945,22 +973,6 @@ $(function () {
     } catch (e) {
       showToast('Error: Invalid JSON');
     }
-  });
-
-  // ========== SEARCH QUIZZES ==========
-  $('#toggleSaved').on('click', function () {
-    const $list = $('#savedList');
-    const $search = $('#searchQuizzes');
-    $list.toggleClass('hidden');
-    $search.toggleClass('hidden');
-  });
-
-  $('#searchQuizzes').on('input', function () {
-    const query = $(this).val().toLowerCase();
-    $('.saved-quiz-card').each(function () {
-      const text = $(this).text().toLowerCase();
-      $(this).toggle(text.includes(query));
-    });
   });
 
   // ========== QUESTION BOOKMARKING ==========
