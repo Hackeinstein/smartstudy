@@ -1109,18 +1109,18 @@ $(function () {
   // Check for saved progress on page load
   if (loadProgress()) {
     // Show the resume modal instead of auto-loading
-    $('#resumeModal').removeClass('hidden').addClass('flex');
+    $('#resumeModal').css('display', 'flex');
   }
 
   // Continue Quiz button
   $('#continueQuizBtn').on('click', function () {
-    $('#resumeModal').removeClass('flex').addClass('hidden');
+    $('#resumeModal').css('display', 'none');
     resumeSavedQuiz();
   });
 
   // Start Fresh button
   $('#startFreshBtn').on('click', function () {
-    $('#resumeModal').removeClass('flex').addClass('hidden');
+    $('#resumeModal').css('display', 'none');
     clearProgress();
     quizData = [];
     userAnswers = {};
