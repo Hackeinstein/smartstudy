@@ -5,32 +5,11 @@
   Free, fast, offline-capable, and built for Nigerian students.
 </p>
 
+<p align="center">
+  <a href="https://smartstudy.pages.dev">Try PastQ Now</a>
+</p>
+
 ---
-
-## ✨ Features
-
-- **AI-Powered Quiz Generation** — Paste JSON output from any AI (ChatGPT, Gemini, etc.) and instantly get an interactive quiz
-- **Custom Quiz Naming** — Name your quizzes for easy identification (e.g. "BIO 201 Midterm")
-- **Saved Quizzes** — All quizzes are saved locally; tap any saved quiz to start it directly
-- **Practice Mode** — See correct answers immediately after each selection
-- **Shuffle Questions** — Randomize question order for varied practice
-- **Timed Quizzes** — Set a timer to simulate real exam conditions
-- **Question Bookmarking** — Flag questions to revisit later
-- **Quick Filters** — Filter by All, Flagged, or Unanswered questions
-- **Review Wrong Answers** — Retry only the questions you got wrong
-- **Progress Auto-Save** — Leave mid-quiz and resume where you left off
-- **Import/Export** — Share quiz files with classmates via WhatsApp/Telegram
-- **Study Streak Tracking** — Build daily study habits with streak badges
-- **Font Size Controls** — 4 size options for comfortable reading
-- **Dark Mode** — Easy on the eyes for late-night study sessions
-- **Score History** — Track your performance over time
-- **Share Results** — Share your quiz scores via native share or clipboard
-- **PWA / Offline Support** — Install to homescreen, works without internet
-- **Touch Gestures** — Mobile-optimized with swipe support
-
-## 🚀 Live Demo
-
-Deployed on Cloudflare Pages: [smartstudy.pages.dev](https://smartstudy.pages.dev)
 
 ## 📱 How It Works
 
@@ -40,57 +19,54 @@ Deployed on Cloudflare Pages: [smartstudy.pages.dev](https://smartstudy.pages.de
 4. **Paste into PastQ** and click "Generate Quiz"
 5. **Take the quiz**, review corrections, and track your progress
 
-## 🛠 Tech Stack
+No sign-up, no accounts, no data collection — everything runs in your browser and stays on your device.
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | HTML, CSS, JavaScript |
-| Styling | Tailwind CSS |
-| Interactivity | jQuery 3.7.1 |
-| Storage | localStorage (no backend) |
-| Hosting | Cloudflare Pages |
-| PWA | Service Worker + Web App Manifest |
+## ✨ Features
 
-**100% client-side** — no server, no database, no accounts, no data collection.
+### Quiz Creation
+- **AI-Powered Quiz Generation** — Paste JSON output from any AI (ChatGPT, Gemini, etc.) and instantly get an interactive quiz
+- **Custom Quiz Naming** — Name your quizzes for easy identification (e.g. "BIO 201 Midterm")
+- **Saved Quizzes** — All quizzes are saved locally; tap any saved quiz to start it directly
+- **Import/Export** — Share quiz files with classmates via WhatsApp/Telegram
 
-## 📂 Project Structure
+### Taking Quizzes
+- **Practice Mode** — See correct answers immediately after each selection
+- **Shuffle Questions** — Randomize question order for varied practice
+- **Timed Quizzes** — Set a timer to simulate real exam conditions
+- **Question Bookmarking** — Flag questions to revisit later
+- **Quick Filters** — Filter by All, Flagged, or Unanswered questions
+- **Progress Auto-Save** — Leave mid-quiz and resume where you left off
 
-```
-smartstudy/
-├── index.html       # Landing page with instructions & AI prompt
-├── quiz.html        # Quiz interface (generate, take, review)
-├── app.js           # Core application logic (~1100 lines)
-├── styles.css       # Custom styles & animations
-├── manifest.json    # PWA manifest
-├── sw.js            # Service worker for offline caching
-└── sample/          # Sample data
-```
+### Review & Progress
+- **Review Wrong Answers** — Retry only the questions you got wrong
+- **Score History** — Track your performance over time
+- **Study Streak Tracking** — Build daily study habits with streak badges
+- **Share Results** — Share your quiz scores via native share or clipboard
 
-## 🏗 Local Development
+### Accessibility & Comfort
+- **Font Size Controls** — 4 size options for comfortable reading
+- **Dark Mode** — Easy on the eyes for late-night study sessions
+- **Touch Gestures** — Mobile-optimized with swipe support
+- **PWA / Offline Support** — Install to homescreen, works without internet
 
-No build step required. Just serve the files:
+## 📲 Install as an App
 
-```bash
-# Using Python
-python3 -m http.server 8000
+PastQ works as a Progressive Web App — you can install it on your phone or computer for a native app experience:
 
-# Using Node
-npx serve .
+1. Open [smartstudy.pages.dev](https://smartstudy.pages.dev) in your browser
+2. **On Android:** Tap the browser menu → "Add to Home Screen"
+3. **On iPhone:** Tap the Share button → "Add to Home Screen"
+4. **On Desktop:** Click the install icon in the address bar
 
-# Then open http://localhost:8000
-```
+Once installed, PastQ works fully offline.
 
-## 📦 Deployment
+## 💡 Tips
 
-Push to GitHub and connect to [Cloudflare Pages](https://pages.cloudflare.com/):
-
-- **Build command:** _(none)_
-- **Build output directory:** `/`
-- **Framework preset:** None
-
-## 🤝 Contributing
-
-Pull requests are welcome. For major changes, please open an issue first.
+- **Use any AI** — ChatGPT, Gemini, Claude, Copilot, or any other AI that can produce JSON
+- **Share quizzes** — Export a quiz file and send it to classmates; they can import it directly
+- **Flag tough questions** — Bookmark questions you want to revisit, then use the Flagged filter
+- **Simulate exams** — Turn on the timer and shuffle for a realistic practice experience
+- **Track your progress** — Check your score history to see improvement over time
 
 ## 📄 License
 
